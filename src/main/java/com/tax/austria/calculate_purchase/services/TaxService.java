@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.springframework.http.HttpStatus;
@@ -15,8 +16,8 @@ import com.tax.austria.calculate_purchase.model.PurchaseData;
 
 @Component
 public class TaxService {
-	
-	final ArrayList<Integer> availableRates = new ArrayList<>(Arrays.asList(10, 13, 20));
+	// Those values can't change and are the same for every instance.
+	static final ArrayList<Integer> availableRates = new ArrayList<>(Arrays.asList(10, 13, 20));
 	static final String INVALID_RATE = "Invalid rate (available options: 10, 13, 20).";
 	static final String INVALID_INPUT = "Invalid input, you can only fill one field besides the rate: Net, Gross or Tax.";
 	static final Integer ROUND_VALUE = 2;
@@ -27,35 +28,15 @@ public class TaxService {
             return new ResponseEntity<>(INVALID_RATE, HttpStatus.UNPROCESSABLE_ENTITY); //422 
         }
 
-        Stream<Double> streamValues = Stream.of(data.getGross(), data.getNet(), data.getTax());
-        if (streamValues.allMatch(x -> x == null)) {
+        Supplier<Stream<Double>> streamValues = () -> Stream.of(data.getGross(), data.getNet(), data.getTax());
+		if (streamValues.get().allMatch(x -> x == null)) {
             return new ResponseEntity<>(INVALID_INPUT, HttpStatus.BAD_REQUEST);
-        }
+		}
 
-		// Integer countFields = 0;
-		// for (Field field : purchaseData.getClass().getDeclaredFields()) {
-		// 	try {
-		// 		field.setAccessible(true);
-		// 		var fieldValue = field.get(purchaseData);
-		// 		var fieldName = field.getName();
-				
-		// 		if (fieldName.equals("rate")) {
-		// 			Integer value = Integer.parseInt(fieldValue.toString());
-		// 			if (!availableRates.contains(value)) {
-		// 				return new ResponseEntity<>(INVALID_RATE, 
-		// 						HttpStatus.BAD_REQUEST);
-		// 			}
-		// 		} else if (fieldValue != null) {
-		// 			countFields++;
-		// 		}
-		// 	} catch (IllegalArgumentException | IllegalAccessException e) {
-		// 		return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-		// 	}
-		// }
+		if (streamValues.get().filter(x -> x != null).count() > 1) {
+			return new ResponseEntity<>(INVALID_INPUT, HttpStatus.UNPROCESSABLE_ENTITY); //422 
+		}
 		
-		// if (countFields != 1) {
-		// 	return new ResponseEntity<>(INVALID_INPUT, HttpStatus.BAD_REQUEST);
-		// }
 		return new ResponseEntity<>(calculateVAT(data), HttpStatus.OK);
 	}
 	

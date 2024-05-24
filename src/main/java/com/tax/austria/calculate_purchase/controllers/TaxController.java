@@ -1,7 +1,6 @@
 package com.tax.austria.calculate_purchase.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,7 +25,6 @@ public class TaxController {
 	
 	@PostMapping("/austria")
 	public ResponseEntity<Object> calculate(@RequestBody PurchaseData purchaseData) {
-		//return new ResponseEntity<>((purchaseData), HttpStatus.OK);
 		return service.calculateTax(purchaseData);
 	}
 
